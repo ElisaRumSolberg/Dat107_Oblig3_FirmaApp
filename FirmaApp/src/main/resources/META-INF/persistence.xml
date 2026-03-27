@@ -3,6 +3,9 @@
 
     <persistence-unit name="firmaPU">
 
+        <!-- Entity classes -->
+        <class>no.hvl.firmaapp.Ansatt</class>
+
         <properties>
             <!-- Databasetilkobling -->
             <property name="jakarta.persistence.jdbc.driver"
@@ -16,6 +19,7 @@
 
             <!-- Vis SQL-spørringer i konsollen -->
             <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
         </properties>
 
     </persistence-unit>
