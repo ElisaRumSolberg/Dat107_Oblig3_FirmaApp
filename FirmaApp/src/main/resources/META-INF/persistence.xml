@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="https://jakarta.ee/xml/ns/persistence" version="3.0">
+
+    <persistence-unit name="firmaPU">
+
+        <properties>
+            <!-- Databasetilkobling -->
+            <property name="jakarta.persistence.jdbc.driver"
+                      value="org.postgresql.Driver"/>
+            <property name="jakarta.persistence.jdbc.url"
+                      value="jdbc:postgresql://ider-database.westeurope.cloudapp.azure.com:5433/elsol0297"/>
+            <property name="jakarta.persistence.jdbc.user"
+                      value="elsol0297"/>
+            <property name="jakarta.persistence.jdbc.password"
+                      value="pass"/>
+
+            <!-- Vis SQL-spørringer i konsollen -->
+            <property name="hibernate.show_sql" value="true"/>
+        </properties>
+
+    </persistence-unit>
+
+</persistence>
