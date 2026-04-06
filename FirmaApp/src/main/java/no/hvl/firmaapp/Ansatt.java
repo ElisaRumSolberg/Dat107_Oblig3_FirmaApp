@@ -29,6 +29,10 @@ public class Ansatt {
     @Column(name = "maanedsloen", nullable = false)
     private double maanedsloen;
 
+    @ManyToOne
+    @JoinColumn(name = "avdeling_id")
+    private Avdeling avdeling;
+
     public Ansatt() {
     }
 
@@ -82,6 +86,14 @@ public class Ansatt {
 
     public void setMaanedsloen(double maanedsloen) {
         this.maanedsloen = maanedsloen;
+    }
+
+    public Avdeling getAvdeling() {
+        return avdeling;
+    }
+
+    public void setAvdeling(Avdeling avdeling) {
+        this.avdeling = avdeling;
     }
 
     @Override
