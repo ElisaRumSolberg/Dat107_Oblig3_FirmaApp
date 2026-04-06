@@ -10,9 +10,9 @@ import java.util.Scanner;
 public class Main {
 
     public static void main(String[] args) {
-        EntityManagerFactory emf =
-                Persistence.createEntityManagerFactory("firmaPU");
-        AnsattDAO dao = new AnsattDAO(emf);
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("firmaPU");
+        AnsattDAO ansattDao = new AnsattDAO(emf);
+        AvdelingDAO avdelingDao = new AvdelingDAO(emf);
         Scanner scanner = new Scanner(System.in);
 
         while (true) {
@@ -22,6 +22,8 @@ public class Main {
             System.out.println("3. List alle ansatte");
             System.out.println("4. Oppdater stilling og lønn");
             System.out.println("5. Legg til ny ansatt");
+            System.out.println("6. Søk avdeling med ID");
+            System.out.println("7. List alle avdelinger");
             System.out.println("0. Avslutt");
             System.out.print("Valg: ");
 
@@ -29,29 +31,43 @@ public class Main {
             scanner.nextLine();
 
             switch (valg) {
+
                 case 1 -> {
                     System.out.print("Skriv inn ID: ");
                     int id = scanner.nextInt();
                     scanner.nextLine();
-
-                    Ansatt a = dao.finnAnsattMedId(id);
-                    System.out.println(a != null ? a : "Ikke funnet.");
+                    Ansatt a = ansattDao.finnAnsattMedId(id);
+                    if (a != null) {
+                        System.out.println(a);
+                        System.out.println("Avdeling: " +
+                                (a.getAvdeling() != null ? a.getAvdeling().getNavn() : "Ingen"));
+                    } else {
+                        System.out.println("Ikke funnet.");
+                    }
                 }
 
                 case 2 -> {
                     System.out.print("Skriv inn brukernavn: ");
                     String bn = scanner.nextLine();
-
-                    Ansatt a = dao.finnAnsattMedBrukernavn(bn);
-                    System.out.println(a != null ? a : "Ikke funnet.");
+                    Ansatt a = ansattDao.finnAnsattMedBrukernavn(bn);
+                    if (a != null) {
+                        System.out.println(a);
+                        System.out.println("Avdeling: " +
+                                (a.getAvdeling() != null ? a.getAvdeling().getNavn() : "Ingen"));
+                    } else {
+                        System.out.println("Ikke funnet.");
+                    }
                 }
 
                 case 3 -> {
-                    List<Ansatt> alle = dao.hentAlleAnsatte();
+                    List<Ansatt> alle = ansattDao.hentAlleAnsatte();
                     if (alle.isEmpty()) {
                         System.out.println("Ingen ansatte funnet.");
                     } else {
-                        alle.forEach(System.out::println);
+                        for (Ansatt a : alle) {
+                            System.out.println(a + " | Avdeling: " +
+                                    (a.getAvdeling() != null ? a.getAvdeling().getNavn() : "Ingen"));
+                        }
                     }
                 }
 
@@ -59,43 +75,68 @@ public class Main {
                     System.out.print("ID: ");
                     int id = scanner.nextInt();
                     scanner.nextLine();
-
                     System.out.print("Ny stilling: ");
                     String stilling = scanner.nextLine();
-
                     System.out.print("Ny lønn: ");
                     double loenn = scanner.nextDouble();
                     scanner.nextLine();
-
-                    dao.oppdaterStillingOgLoenn(id, stilling, loenn);
+                    ansattDao.oppdaterStillingOgLoenn(id, stilling, loenn);
                     System.out.println("Oppdatert!");
                 }
 
                 case 5 -> {
                     Ansatt ny = new Ansatt();
-
                     System.out.print("Brukernavn (3-4 bokstaver): ");
                     ny.setBrukernavn(scanner.nextLine());
-
                     System.out.print("Fornavn: ");
                     ny.setFornavn(scanner.nextLine());
-
                     System.out.print("Etternavn: ");
                     ny.setEtternavn(scanner.nextLine());
-
                     ny.setAnsettelsesdato(LocalDate.now());
-
                     System.out.print("Stilling: ");
                     ny.setStilling(scanner.nextLine());
-
                     System.out.print("Månedslønn: ");
                     double loenn = scanner.nextDouble();
                     scanner.nextLine();
-
                     ny.setMaanedsloen(loenn);
+                    System.out.print("Avdeling ID: ");
+                    int avdId = scanner.nextInt();
+                    scanner.nextLine();
+                    Avdeling avdeling = avdelingDao.finnAvdelingMedId(avdId);
+                    if (avdeling == null) {
+                        System.out.println("Avdeling ikke funnet!");
+                    } else {
+                        ny.setAvdeling(avdeling);
+                        ansattDao.leggTilAnsatt(ny);
+                        System.out.println("Ansatt lagt til!");
+                    }
+                }
 
-                    dao.leggTilAnsatt(ny);
-                    System.out.println("Ansatt lagt til!");
+                case 6 -> {
+                    System.out.print("Avdeling ID: ");
+                    int id = scanner.nextInt();
+                    scanner.nextLine();
+                    Avdeling av = avdelingDao.finnAvdelingMedId(id);
+                    if (av != null) {
+                        System.out.println(av);
+                        System.out.println("Ansatte:");
+                        for (Ansatt a : av.getAnsatte()) {
+                            boolean erSjef = av.getSjef() != null &&
+                                    av.getSjef().getId() == a.getId();
+                            System.out.println("  " + a + (erSjef ? " [SJEF]" : ""));
+                        }
+                    } else {
+                        System.out.println("Avdeling ikke funnet.");
+                    }
+                }
+
+                case 7 -> {
+                    List<Avdeling> alle = avdelingDao.hentAlleAvdelinger();
+                    if (alle.isEmpty()) {
+                        System.out.println("Ingen avdelinger funnet.");
+                    } else {
+                        alle.forEach(System.out::println);
+                    }
                 }
 
                 case 0 -> {

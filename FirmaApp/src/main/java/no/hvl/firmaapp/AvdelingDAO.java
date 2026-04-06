@@ -14,7 +14,15 @@ public class AvdelingDAO {
     public Avdeling finnAvdelingMedId(int id) {
         EntityManager em = emf.createEntityManager();
         try {
-            return em.find(Avdeling.class, id);
+            TypedQuery<Avdeling> query = em.createQuery(
+                    "SELECT DISTINCT av FROM Avdeling av " +
+                            "LEFT JOIN FETCH av.sjef " +
+                            "LEFT JOIN FETCH av.ansatte " +
+                            "WHERE av.id = :id", Avdeling.class);
+            query.setParameter("id", id);
+
+            List<Avdeling> results = query.getResultList();
+            return results.isEmpty() ? null : results.get(0);
         } finally {
             em.close();
         }
@@ -24,7 +32,9 @@ public class AvdelingDAO {
         EntityManager em = emf.createEntityManager();
         try {
             return em.createQuery(
-                            "SELECT av FROM Avdeling av ORDER BY av.id", Avdeling.class)
+                            "SELECT DISTINCT av FROM Avdeling av " +
+                                    "LEFT JOIN FETCH av.sjef " +
+                                    "ORDER BY av.id", Avdeling.class)
                     .getResultList();
         } finally {
             em.close();
@@ -39,7 +49,9 @@ public class AvdelingDAO {
             em.persist(av);
             tx.commit();
         } catch (Exception e) {
-            if (tx.isActive()) tx.rollback();
+            if (tx.isActive()) {
+                tx.rollback();
+            }
             throw e;
         } finally {
             em.close();
