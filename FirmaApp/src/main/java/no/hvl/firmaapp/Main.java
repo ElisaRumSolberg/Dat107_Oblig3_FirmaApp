@@ -24,6 +24,8 @@ public class Main {
             System.out.println("5. Legg til ny ansatt");
             System.out.println("6. Søk avdeling med ID");
             System.out.println("7. List alle avdelinger");
+            System.out.println("8. Bytt avdeling for ansatt");
+            System.out.println("9. Legg til ny avdeling");
             System.out.println("0. Avslutt");
             System.out.print("Valg: ");
 
@@ -136,6 +138,34 @@ public class Main {
                         System.out.println("Ingen avdelinger funnet.");
                     } else {
                         alle.forEach(System.out::println);
+                    }
+                }
+                case 8 -> {
+                    System.out.print("Ansatt ID: ");
+                    int aid = scanner.nextInt();
+                    scanner.nextLine();
+                    System.out.print("Ny avdeling ID: ");
+                    int avdId = scanner.nextInt();
+                    scanner.nextLine();
+                    try {
+                        ansattDao.byttAvdeling(aid, avdId);
+                        System.out.println("Avdeling byttet!");
+                    } catch (Exception e) {
+                        System.out.println("Feil: " + e.getMessage());
+                    }
+                }
+
+                case 9 -> {
+                    System.out.print("Navn på ny avdeling: ");
+                    String navn = scanner.nextLine();
+                    System.out.print("Sjef (ansatt ID): ");
+                    int sjefId = scanner.nextInt();
+                    scanner.nextLine();
+                    try {
+                        Avdeling ny = avdelingDao.opprettAvdelingMedSjef(navn, sjefId);
+                        System.out.println("Avdeling opprettet: " + ny);
+                    } catch (Exception e) {
+                        System.out.println("Feil: " + e.getMessage());
                     }
                 }
 

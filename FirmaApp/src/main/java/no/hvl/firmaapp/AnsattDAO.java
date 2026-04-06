@@ -86,4 +86,47 @@ public class AnsattDAO {
             em.close();
         }
     }
+
+    public void byttAvdeling(int ansattId, int nyAvdelingId) {
+        EntityManager em = emf.createEntityManager();
+        EntityTransaction tx = em.getTransaction();
+
+        try {
+            tx.begin();
+
+            Ansatt a = em.find(Ansatt.class, ansattId);
+            if (a == null) {
+                throw new RuntimeException("Ansatt ikke funnet.");
+            }
+
+            if (a.getAvdeling() != null && a.getAvdeling().getId() == nyAvdelingId) {
+                throw new RuntimeException("Ansatt jobber allerede i denne avdelingen.");
+            }
+
+            TypedQuery<Long> q = em.createQuery(
+                    "SELECT COUNT(av) FROM Avdeling av WHERE av.sjef IS NOT NULL AND av.sjef.id = :id",
+                    Long.class);
+            q.setParameter("id", ansattId);
+
+            if (q.getSingleResult() > 0) {
+                throw new RuntimeException("Kan ikke bytte avdeling - ansatt er sjef!");
+            }
+
+            Avdeling nyAvd = em.find(Avdeling.class, nyAvdelingId);
+            if (nyAvd == null) {
+                throw new RuntimeException("Avdeling ikke funnet.");
+            }
+
+            a.setAvdeling(nyAvd);
+
+            tx.commit();
+        } catch (Exception e) {
+            if (tx.isActive()) {
+                tx.rollback();
+            }
+            throw e;
+        } finally {
+            em.close();
+        }
+    }
 }
