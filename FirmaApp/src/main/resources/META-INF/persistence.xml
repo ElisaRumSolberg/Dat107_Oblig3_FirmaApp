@@ -5,6 +5,10 @@
 
         <!-- Entity classes -->
         <class>no.hvl.firmaapp.Ansatt</class>
+        <class>no.hvl.firmaapp.Avdeling</class>
+        <class>no.hvl.firmaapp.Prosjekt</class>
+        <class>no.hvl.firmaapp.Prosjektdeltagelse</class>
+
 
         <properties>
             <!-- Databasetilkobling -->

@@ -98,7 +98,12 @@ public class Ansatt {
 
     @Override
     public String toString() {
-        return String.format("[%d] %s %s (%s) - %s - %.0f kr",
-                id, fornavn, etternavn, brukernavn, stilling, maanedsloen);
+        String avdNavn = avdeling != null ? avdeling.getNavn() : "Ingen avdeling";
+        return String.format("%-5s %-20s %-15s %-12s %,.0f kr",
+                "[" + id + "]",
+                fornavn + " " + etternavn,
+                "(" + brukernavn + ")",
+                stilling,
+                maanedsloen);
     }
 }
