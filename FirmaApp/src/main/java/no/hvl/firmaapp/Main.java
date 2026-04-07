@@ -89,14 +89,19 @@ public class Main {
             switch (valg) {
 
                 case 1 -> {
-                    int id = lesHeltall(scanner, "Skriv inn ID: ");
-                    Ansatt a = ansattDao.finnAnsattMedId(id);
+                    Ansatt a = null;
+                    while (a == null) {
+                        int id = lesHeltall(scanner, "Skriv inn ID (0 for å avbryte): ");
+                        if (id == 0) break;
+                        a = ansattDao.finnAnsattMedId(id);
+                        if (a == null) {
+                            System.out.println("Ansatt ikke funnet! Prøv igjen.");
+                        }
+                    }
                     if (a != null) {
                         System.out.println(a);
                         System.out.println("Avdeling: " +
                                 (a.getAvdeling() != null ? a.getAvdeling().getNavn() : "Ingen"));
-                    } else {
-                        System.out.println("Ikke funnet.");
                     }
                 }
 
@@ -175,22 +180,37 @@ public class Main {
                 }
 
                 case 6 -> {
-                    int id = lesHeltall(scanner, "Avdeling ID: ");
-                    Avdeling av = avdelingDao.finnAvdelingMedId(id);
+                    Avdeling av = null;
+                    while (av == null) {
+                        int id = lesHeltall(scanner, "Avdeling ID (0 for å avbryte): ");
+                        if (id == 0) break;
+                        av = avdelingDao.finnAvdelingMedId(id);
+                        if (av == null) {
+                            System.out.println("Avdeling ikke funnet! Prøv igjen.");
+                        }
+                    }
                     if (av != null) {
-                        System.out.println(av);
-                        System.out.println("Ansatte:");
+                        System.out.println("\n--- " + av.getNavn() + " ---");
+                        System.out.println("Sjef: " + (av.getSjef() != null ?
+                                av.getSjef().getFornavn() + " " + av.getSjef().getEtternavn() : "Ingen"));
+                        System.out.println("-".repeat(60));
                         if (av.getAnsatte().isEmpty()) {
                             System.out.println("  Ingen ansatte i avdelingen.");
                         } else {
+                            System.out.printf("%-6s %-25s %-15s %s%n", "ID", "Navn", "Stilling", "Lønn");
+                            System.out.println("-".repeat(60));
                             for (Ansatt a : av.getAnsatte()) {
                                 boolean erSjef = av.getSjef() != null &&
                                         av.getSjef().getId() == a.getId();
-                                System.out.println("  " + a + (erSjef ? " [SJEF]" : ""));
+                                System.out.printf("%-6s %-25s %-15s %,.0f kr %s%n",
+                                        "[" + a.getId() + "]",
+                                        a.getFornavn() + " " + a.getEtternavn(),
+                                        a.getStilling(),
+                                        a.getMaanedsloen(),
+                                        erSjef ? "[SJEF]" : "");
                             }
+                            System.out.println("-".repeat(60));
                         }
-                    } else {
-                        System.out.println("Avdeling ikke funnet.");
                     }
                 }
 
@@ -199,39 +219,130 @@ public class Main {
                     if (alle.isEmpty()) {
                         System.out.println("Ingen avdelinger funnet.");
                     } else {
-                        alle.forEach(System.out::println);
+                        System.out.println("\n--- Alle avdelinger ---");
+                        System.out.printf("%-6s %-20s %s%n", "ID", "Navn", "Sjef");
+                        System.out.println("-".repeat(50));
+                        for (Avdeling av : alle) {
+                            String sjefNavn = av.getSjef() != null ?
+                                    av.getSjef().getFornavn() + " " + av.getSjef().getEtternavn() : "Ingen";
+                            System.out.printf("%-6s %-20s %s%n",
+                                    "[" + av.getId() + "]",
+                                    av.getNavn(),
+                                    sjefNavn);
+                        }
+                        System.out.println("-".repeat(50));
                     }
                 }
 
                 case 8 -> {
-                    int aid = lesHeltall(scanner, "Ansatt ID: ");
-                    int avdId = lesHeltall(scanner, "Ny avdeling ID: ");
-                    try {
-                        ansattDao.byttAvdeling(aid, avdId);
-                        System.out.println("Avdeling byttet!");
-                    } catch (Exception e) {
-                        System.out.println("Feil: " + e.getMessage());
+                    // 1. Ansattları göster
+                    System.out.println("\nAnsatte:");
+                    List<Ansatt> alleAnsatte = ansattDao.hentAlleAnsatte();
+                    for (Ansatt a : alleAnsatte) {
+                        boolean erSjef = a.getAvdeling() != null &&
+                                a.getAvdeling().getSjef() != null &&
+                                a.getAvdeling().getSjef().getId() == a.getId();
+                        System.out.printf("  %-6s %-25s %-15s %s%n",
+                                "[" + a.getId() + "]",
+                                a.getFornavn() + " " + a.getEtternavn(),
+                                a.getAvdeling() != null ? "(" + a.getAvdeling().getNavn() + ")" : "(Ingen avdeling)",
+                                erSjef ? "[SJEF]" : "");
+                    }
+
+                    // 2. Ansatt ID sor
+                    Ansatt ansatt = null;
+                    int aid = 0;
+                    while (ansatt == null) {
+                        aid = lesHeltall(scanner, "Ansatt ID (0 for å avbryte): ");
+                        if (aid == 0) break;
+                        ansatt = ansattDao.finnAnsattMedId(aid);
+                        if (ansatt == null) {
+                            System.out.println("Ansatt ikke funnet! Prøv igjen.");
+                        }
+                    }
+
+                    if (ansatt != null) {
+                        // 3. Avdelingleri göster
+                        System.out.println("\nTilgjengelige avdelinger:");
+                        List<Avdeling> avdelinger = avdelingDao.hentAlleAvdelinger();
+                        for (Avdeling av : avdelinger) {
+                            System.out.printf("  %-6s %s%n", "[" + av.getId() + "]", av.getNavn());
+                        }
+
+                        // 4. Avdeling ID sor
+                        Avdeling nyAvd = null;
+                        while (nyAvd == null) {
+                            int avdId = lesHeltall(scanner, "Ny avdeling ID (0 for å avbryte): ");
+                            if (avdId == 0) break;
+                            nyAvd = avdelingDao.finnAvdelingMedId(avdId);
+                            if (nyAvd == null) {
+                                System.out.println("Avdeling ikke funnet! Prøv igjen.");
+                            } else {
+                                try {
+                                    ansattDao.byttAvdeling(aid, avdId);
+                                    System.out.println("Avdeling byttet!");
+                                } catch (Exception e) {
+                                    System.out.println("Feil: " + e.getMessage());
+                                    break;
+                                }
+                            }
+                        }
                     }
                 }
 
                 case 9 -> {
                     System.out.print("Navn på ny avdeling: ");
                     String navn = scanner.nextLine();
-                    int sjefId = lesHeltall(scanner, "Sjef (ansatt ID): ");
-                    try {
-                        Avdeling ny = avdelingDao.opprettAvdelingMedSjef(navn, sjefId);
-                        System.out.println("Avdeling opprettet: " + ny);
-                    } catch (Exception e) {
-                        System.out.println("Feil: " + e.getMessage());
+
+                    // Ansattları göster
+                    System.out.println("\nAnsatte:");
+                    List<Ansatt> alleAnsatte = ansattDao.hentAlleAnsatte();
+                    for (Ansatt a : alleAnsatte) {
+                        boolean erSjef = a.getAvdeling() != null &&
+                                a.getAvdeling().getSjef() != null &&
+                                a.getAvdeling().getSjef().getId() == a.getId();
+                        System.out.printf("  %-6s %-25s %-15s %s%n",
+                                "[" + a.getId() + "]",
+                                a.getFornavn() + " " + a.getEtternavn(),
+                                a.getAvdeling() != null ? "(" + a.getAvdeling().getNavn() + ")" : "(Ingen avdeling)",
+                                erSjef ? "[SJEF]" : "");
+                    }
+
+                    boolean ferdig = false;
+                    while (!ferdig) {
+                        int sjefId = lesHeltall(scanner, "Sjef (ansatt ID, 0 for å avbryte): ");
+                        if (sjefId == 0) break;
+                        Ansatt sjef = ansattDao.finnAnsattMedId(sjefId);
+                        if (sjef == null) {
+                            System.out.println("Ansatt ikke funnet! Prøv igjen.");
+                            continue;
+                        }
+                        try {
+                            Avdeling ny = avdelingDao.opprettAvdelingMedSjef(navn, sjefId);
+                            System.out.println("Avdeling opprettet: " + ny);
+                            ferdig = true;
+                        } catch (Exception e) {
+                            System.out.println("Feil: " + e.getMessage() + " Velg en annen ansatt.");
+                        }
                     }
                 }
 
                 case 10 -> {
                     Prosjekt ny = new Prosjekt();
-                    System.out.print("Navn: ");
-                    ny.setNavn(scanner.nextLine());
+
+                    String navn = "";
+                    while (navn.isBlank()) {
+                        System.out.print("Navn: ");
+                        navn = scanner.nextLine().trim();
+                        if (navn.isBlank()) {
+                            System.out.println("Navn kan ikke være tomt!");
+                        }
+                    }
+                    ny.setNavn(navn);
+
                     System.out.print("Beskrivelse: ");
-                    ny.setBeskrivelse(scanner.nextLine());
+                    ny.setBeskrivelse(scanner.nextLine().trim());
+
                     try {
                         prosjektDao.leggTilProsjekt(ny);
                         System.out.println("Prosjekt lagt til!");
@@ -241,60 +352,201 @@ public class Main {
                 }
 
                 case 11 -> {
-                    int aid = lesHeltall(scanner, "Ansatt ID: ");
-                    int pid = lesHeltall(scanner, "Prosjekt ID: ");
-
-                    System.out.print("Rolle: ");
-                    String rolle = scanner.nextLine();
-
-                    int timer = lesHeltall(scanner, "Timer: ");
-
-                    if (timer < 0) {
-                        System.out.println("Feil: Timer kan ikke være negativ.");
-                        break;
+                    // 1. Ansatt list
+                    System.out.println("\nAnsatte:");
+                    List<Ansatt> alleAnsatte = ansattDao.hentAlleAnsatteMedProsjekter();
+                    for (Ansatt a : alleAnsatte) {
+                        String prosjekter = a.getDeltagelser().isEmpty() ? "Ingen prosjekter" :
+                                a.getDeltagelser().stream()
+                                        .map(d -> d.getProsjekt().getNavn())
+                                        .collect(java.util.stream.Collectors.joining(", "));
+                        System.out.printf("  %-6s %-25s %s%n",
+                                "[" + a.getId() + "]",
+                                a.getFornavn() + " " + a.getEtternavn(),
+                                prosjekter);
                     }
 
-                    try {
-                        prosjektDao.leggTilDeltagelse(aid, pid, rolle, timer);
-                        System.out.println("Deltagelse registrert!");
-                    } catch (Exception e) {
-                        System.out.println("Feil: " + e.getMessage());
+                    // 2. spær Ansatt ID
+                    Ansatt ansatt = null;
+                    int aid = 0;
+                    while (ansatt == null) {
+                        aid = lesHeltall(scanner, "Ansatt ID (0 for å avbryte): ");
+                        if (aid == 0) break;
+                        ansatt = ansattDao.finnAnsattMedId(aid);
+                        if (ansatt == null) {
+                            System.out.println("Ansatt ikke funnet! Prøv igjen.");
+                        }
+                    }
+
+                    if (ansatt != null) {
+                        // 3. Prosjekt listesi
+                        System.out.println("\nProsjekter:");
+                        List<Prosjekt> alleProsjekter = prosjektDao.hentAlleProsjekter();
+                        for (Prosjekt p : alleProsjekter) {
+                            System.out.printf("  %-6s %s%n",
+                                    "[" + p.getId() + "]",
+                                    p.getNavn());
+                        }
+
+                        // 4. spør Prosjekt ID
+                        Prosjekt prosjekt = null;
+                        int pid = 0;
+                        while (prosjekt == null) {
+                            pid = lesHeltall(scanner, "Prosjekt ID (0 for å avbryte): ");
+                            if (pid == 0) break;
+                            prosjekt = prosjektDao.finnProsjektMedId(pid);
+                            if (prosjekt == null) {
+                                System.out.println("Prosjekt ikke funnet! Prøv igjen.");
+                            }
+                        }
+
+                        if (prosjekt != null) {
+                            // 5. spør Rolle
+                            String rolle = "";
+                            while (rolle.isBlank() || rolle.matches(".*\\d.*")) {
+                                System.out.print("Rolle: ");
+                                rolle = scanner.nextLine().trim();
+                                if (rolle.isBlank()) {
+                                    System.out.println("Rolle kan ikke være tom!");
+                                } else if (rolle.matches(".*\\d.*")) {
+                                    System.out.println("Rolle kan ikke inneholde tall!");
+                                }
+                            }
+
+                            // 6. Timer sor
+                            int timer = -1;
+                            while (timer <= 0) {
+                                timer = lesHeltall(scanner, "Timer: ");
+                                if (timer <= 0) {
+                                    System.out.println("Timer må være større enn 0!");
+                                }
+                            }
+
+                            // 7. Kaydet
+                            try {
+                                prosjektDao.leggTilDeltagelse(aid, pid, rolle, timer);
+                                System.out.println("Deltagelse registrert!");
+                            } catch (Exception e) {
+                                System.out.println("Feil: " + e.getMessage());
+                            }
+                        }
                     }
                 }
 
                 case 12 -> {
-                    int aid = lesHeltall(scanner, "Ansatt ID: ");
-                    int pid = lesHeltall(scanner, "Prosjekt ID: ");
-                    int timer = lesHeltall(scanner, "Antall timer å legge til: ");
-
-                    if (timer < 0) {
-                        System.out.println("Feil: Timer kan ikke være negativ.");
-                        break;
+                    // Ansatt listesi
+                    System.out.println("\nAnsatte:");
+                    List<Ansatt> alleAnsatte = ansattDao.hentAlleAnsatteMedProsjekter();
+                    for (Ansatt a : alleAnsatte) {
+                        String prosjekter = a.getDeltagelser().isEmpty() ? "Ingen prosjekter" :
+                                a.getDeltagelser().stream()
+                                        .map(d -> d.getProsjekt().getNavn())
+                                        .collect(java.util.stream.Collectors.joining(", "));
+                        System.out.printf("  %-6s %-25s %s%n",
+                                "[" + a.getId() + "]",
+                                a.getFornavn() + " " + a.getEtternavn(),
+                                prosjekter);
                     }
 
-                    try {
-                        prosjektDao.leggTilTimer(aid, pid, timer);
-                        System.out.println("Timer oppdatert!");
-                    } catch (Exception e) {
-                        System.out.println("Feil: " + e.getMessage());
+                    // Ansatt ID sor
+                    Ansatt ansatt = null;
+                    int aid = 0;
+                    while (ansatt == null) {
+                        aid = lesHeltall(scanner, "Ansatt ID (0 for å avbryte): ");
+                        if (aid == 0) break;
+                        ansatt = ansattDao.finnAnsattMedId(aid);
+                        if (ansatt == null) {
+                            System.out.println("Ansatt ikke funnet! Prøv igjen.");
+                        }
+                    }
+
+                    if (ansatt != null) {
+                        // Prosjekt listesi
+                        System.out.println("\nProsjekter:");
+                        List<Prosjekt> alleProsjekter = prosjektDao.hentAlleProsjekter();
+                        for (Prosjekt p : alleProsjekter) {
+                            System.out.printf("  %-6s %s%n",
+                                    "[" + p.getId() + "]",
+                                    p.getNavn());
+                        }
+
+                        // spør Prosjekt ID
+
+                        Prosjekt valgtProsjekt = null;
+                        int pid = 0;
+                        while (valgtProsjekt == null) {
+                            pid = lesHeltall(scanner, "Prosjekt ID (0 for å avbryte): ");
+                            if (pid == 0) break;
+
+                            Prosjekt p = prosjektDao.finnProsjektMedId(pid);
+                            if (p == null) {
+                                System.out.println("Prosjekt ikke funnet! Prøv igjen.");
+                            } else if (!prosjektDao.erRegistrertPaProsjekt(aid, pid)) {
+                                System.out.println("Feil: Ansatt er ikke registrert på dette prosjektet! Prøv igjen.");
+                            } else {
+                                valgtProsjekt = p;
+                            }
+                        }
+
+                        if (valgtProsjekt != null) {
+                            // Timer sor
+                            int timer = -1;
+                            while (timer <= 0) {
+                                timer = lesHeltall(scanner, "Antall timer å legge til: ");
+                                if (timer <= 0) {
+                                    System.out.println("Timer må være større enn 0!");
+                                }
+                            }
+                            try {
+                                prosjektDao.leggTilTimer(aid, pid, timer);
+                                System.out.println("Timer oppdatert!");
+                            } catch (Exception e) {
+                                System.out.println("Feil: " + e.getMessage());
+                            }
+                        }
                     }
                 }
 
                 case 13 -> {
-                    int pid = lesHeltall(scanner, "Prosjekt ID: ");
-                    Prosjekt p = prosjektDao.finnProsjektMedId(pid);
-                    if (p == null) {
-                        System.out.println("Prosjekt ikke funnet.");
-                    } else {
-                        System.out.println(p);
+                    // Prosjekt list
+                    System.out.println("\nProsjekter:");
+                    List<Prosjekt> alleProsjekter = prosjektDao.hentAlleProsjekter();
+                    for (Prosjekt pr : alleProsjekter) {
+                        System.out.printf("  %-6s %s%n",
+                                "[" + pr.getId() + "]",
+                                pr.getNavn());
+                    }
+
+                    // spør Prosjekt ID
+                    Prosjekt p = null;
+                    while (p == null) {
+                        int pid = lesHeltall(scanner, "Prosjekt ID (0 for å avbryte): ");
+                        if (pid == 0) break;
+                        p = prosjektDao.finnProsjektMedId(pid);
+                        if (p == null) {
+                            System.out.println("Prosjekt ikke funnet! Prøv igjen.");
+                        }
+                    }
+
+                    if (p != null) {
+                        System.out.println("\n--- " + p.getNavn() + " ---");
+                        System.out.println("Beskrivelse: " + p.getBeskrivelse());
+                        System.out.println("-".repeat(60));
+
                         if (p.getDeltagere().isEmpty()) {
                             System.out.println("Ingen deltagere registrert.");
                         } else {
+                            System.out.printf("%-25s %-15s %s%n", "Navn", "Rolle", "Timer");
+                            System.out.println("-".repeat(60));
                             int totalt = 0;
                             for (Prosjektdeltagelse pd : p.getDeltagere()) {
-                                System.out.println("  " + pd);
+                                System.out.printf("%-25s %-15s %d timer%n",
+                                        pd.getAnsatt().getFornavn() + " " + pd.getAnsatt().getEtternavn(),
+                                        pd.getRolle(),
+                                        pd.getTimer());
                                 totalt += pd.getTimer();
                             }
+                            System.out.println("-".repeat(60));
                             System.out.println("Totalt timer: " + totalt);
                         }
                     }

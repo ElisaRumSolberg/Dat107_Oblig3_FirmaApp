@@ -2,6 +2,8 @@ package no.hvl.firmaapp;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "ansatt")
@@ -33,72 +35,40 @@ public class Ansatt {
     @JoinColumn(name = "avdeling_id")
     private Avdeling avdeling;
 
+    @OneToMany(mappedBy = "ansatt", fetch = FetchType.LAZY)
+    private List<Prosjektdeltagelse> deltagelser;
+
     public Ansatt() {
+        this.deltagelser = new ArrayList<>();
     }
 
-    public int getId() {
-        return id;
-    }
+    public int getId() { return id; }
 
-    public String getBrukernavn() {
-        return brukernavn;
-    }
+    public String getBrukernavn() { return brukernavn; }
+    public void setBrukernavn(String brukernavn) { this.brukernavn = brukernavn; }
 
-    public void setBrukernavn(String brukernavn) {
-        this.brukernavn = brukernavn;
-    }
+    public String getFornavn() { return fornavn; }
+    public void setFornavn(String fornavn) { this.fornavn = fornavn; }
 
-    public String getFornavn() {
-        return fornavn;
-    }
+    public String getEtternavn() { return etternavn; }
+    public void setEtternavn(String etternavn) { this.etternavn = etternavn; }
 
-    public void setFornavn(String fornavn) {
-        this.fornavn = fornavn;
-    }
+    public LocalDate getAnsettelsesdato() { return ansettelsesdato; }
+    public void setAnsettelsesdato(LocalDate ansettelsesdato) { this.ansettelsesdato = ansettelsesdato; }
 
-    public String getEtternavn() {
-        return etternavn;
-    }
+    public String getStilling() { return stilling; }
+    public void setStilling(String stilling) { this.stilling = stilling; }
 
-    public void setEtternavn(String etternavn) {
-        this.etternavn = etternavn;
-    }
+    public double getMaanedsloen() { return maanedsloen; }
+    public void setMaanedsloen(double maanedsloen) { this.maanedsloen = maanedsloen; }
 
-    public LocalDate getAnsettelsesdato() {
-        return ansettelsesdato;
-    }
+    public Avdeling getAvdeling() { return avdeling; }
+    public void setAvdeling(Avdeling avdeling) { this.avdeling = avdeling; }
 
-    public void setAnsettelsesdato(LocalDate ansettelsesdato) {
-        this.ansettelsesdato = ansettelsesdato;
-    }
-
-    public String getStilling() {
-        return stilling;
-    }
-
-    public void setStilling(String stilling) {
-        this.stilling = stilling;
-    }
-
-    public double getMaanedsloen() {
-        return maanedsloen;
-    }
-
-    public void setMaanedsloen(double maanedsloen) {
-        this.maanedsloen = maanedsloen;
-    }
-
-    public Avdeling getAvdeling() {
-        return avdeling;
-    }
-
-    public void setAvdeling(Avdeling avdeling) {
-        this.avdeling = avdeling;
-    }
+    public List<Prosjektdeltagelse> getDeltagelser() { return deltagelser; }
 
     @Override
     public String toString() {
-        String avdNavn = avdeling != null ? avdeling.getNavn() : "Ingen avdeling";
         return String.format("%-5s %-20s %-15s %-12s %,.0f kr",
                 "[" + id + "]",
                 fornavn + " " + etternavn,

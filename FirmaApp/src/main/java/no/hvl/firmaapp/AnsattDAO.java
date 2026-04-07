@@ -129,4 +129,18 @@ public class AnsattDAO {
             em.close();
         }
     }
+
+    public List<Ansatt> hentAlleAnsatteMedProsjekter() {
+        EntityManager em = emf.createEntityManager();
+        try {
+            return em.createQuery(
+                            "SELECT DISTINCT a FROM Ansatt a " +
+                                    "LEFT JOIN FETCH a.deltagelser d " +
+                                    "LEFT JOIN FETCH d.prosjekt " +
+                                    "ORDER BY a.id", Ansatt.class)
+                    .getResultList();
+        } finally {
+            em.close();
+        }
+    }
 }

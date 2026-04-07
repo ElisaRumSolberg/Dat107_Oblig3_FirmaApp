@@ -121,4 +121,14 @@ public class ProsjektDAO {
             em.close();
         }
     }
+
+    public boolean erRegistrertPaProsjekt(int ansattId, int prosjektId) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            ProsjektdeltagelseId pid = new ProsjektdeltagelseId(ansattId, prosjektId);
+            return em.find(Prosjektdeltagelse.class, pid) != null;
+        } finally {
+            em.close();
+        }
+    }
 }
